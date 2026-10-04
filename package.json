@@ -1,28 +1,35 @@
 {
-  "name": "hotel-management-system",
-  "version": "1.0.0",
-  "description": "",
-  "homepage": "https://github.com/mostafa-khaled77/hotel-management-system#readme",
-  "bugs": {
-    "url": "https://github.com/mostafa-khaled77/hotel-management-system/issues"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/mostafa-khaled77/hotel-management-system.git"
-  },
-  "license": "ISC",
-  "author": "Mostafa Khalid",
-  "type": "commonjs",
-  "main": "index.js",
-  "scripts": {
-    "start": "nodemon src/server.js"
-  },
-  "dependencies": {
-    "dotenv": "^18.0.5",
-    "express": "^5.2.1",
-    "mongoose": "^9.10.3"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.14"
-  }
+    "name": "hotel-management-system",
+    "version": "1.0.0",
+    "description": "",
+    "homepage": "https://github.com/mostafa-khaled77/hotel-management-system#readme",
+    "bugs": {
+        "url": "https://github.com/mostafa-khaled77/hotel-management-system/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/mostafa-khaled77/hotel-management-system.git"
+    },
+    "license": "ISC",
+    "author": "Mostafa Khalid",
+    "type": "commonjs",
+    "main": "index.js",
+    "scripts": {
+        "start": "nodemon src/server.js",
+        "lint": "eslint .",
+        "format": "prettier --write \"src/**/*.js\""
+    },
+    "dependencies": {
+        "dotenv": "^18.0.5",
+        "express": "^5.2.1",
+        "express-async-handler": "^1.2.0",
+        "mongoose": "^9.10.3"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "eslint": "^10.12.0",
+        "globals": "^17.13.0",
+        "nodemon": "^3.1.14",
+        "prettier": "^3.9.9"
+    }
 }
