@@ -12,6 +12,7 @@ app.use(logger);
 app.use(successResponse);
 
 // Routes
+app.use('/api/v1/rooms', require('./routes/room'));
 
 // Error Handlers
 app.use(notFound);
