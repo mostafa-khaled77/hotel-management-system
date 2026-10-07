@@ -5,6 +5,9 @@ const {
     validateUpdateRoom,
 } = require('../models/room.model');
 const AppError = require('../utils/AppError');
+const validationError = require('../middlewares/validationError');
+const { StatusCodes } = require('http-status-codes');
+const ERROR_CODES = require('../constants/errorCodes');
 
 /**
  * @desc  Get All Rooms
@@ -22,7 +25,7 @@ const getAllRooms = asyncHandler(async (req, res) => {
         .limit(limit);
     const total = await Room.countDocuments();
 
-    res.success(roomList, 200, {
+    res.success(roomList, StatusCodes.OK, {
         page,
         limit,
         total,
@@ -39,10 +42,15 @@ const getAllRooms = asyncHandler(async (req, res) => {
 const getRoomById = asyncHandler(async (req, res, next) => {
     const room = await Room.findById(req.params.id);
     if (!room) {
-        return next(new AppError(404, 'ROOM_NOT_FOUND', 'Room Not Found'));
-    } else {
-        res.success(room);
+        return next(
+            new AppError(
+                StatusCodes.NOT_FOUND,
+                ERROR_CODES.NOT_FOUND,
+                'Room Not Found'
+            )
+        );
     }
+    res.success(room);
 });
 
 /**
@@ -54,8 +62,7 @@ const getRoomById = asyncHandler(async (req, res, next) => {
 const createNewRoom = asyncHandler(async (req, res, next) => {
     const { error } = validateCreateRoom(req.body);
     if (error) {
-        const errMessage = error.details.map((d) => d.message).join(',');
-        return next(new AppError(400, 'VALIDATION_ERROR', errMessage));
+        return next(validationError(error));
     }
 
     const room = new Room({
@@ -69,7 +76,7 @@ const createNewRoom = asyncHandler(async (req, res, next) => {
     });
     const result = await room.save();
 
-    res.success(result, 201);
+    res.success(result, StatusCodes.CREATED);
 });
 
 /**
@@ -81,17 +88,22 @@ const createNewRoom = asyncHandler(async (req, res, next) => {
 const updateRoom = asyncHandler(async (req, res, next) => {
     const { error } = validateUpdateRoom(req.body);
     if (error) {
-        const errMessage = error.details.map((d) => d.message).join(',');
-        return next(new AppError(400, 'VALIDATION_ERROR', errMessage));
+        return next(validationError(error));
     }
     const updatedRoom = await Room.findByIdAndUpdate(
         req.params.id,
-        { $set: req.bodyw },
+        { $set: req.body },
         { returnDocument: 'after', runValidators: true }
     );
 
     if (!updatedRoom) {
-        return next(new AppError(404, 'NOT_FOUND', 'Room Not Found'));
+        return next(
+            new AppError(
+                StatusCodes.NOT_FOUND,
+                ERROR_CODES.NOT_FOUND,
+                'Room Not Found'
+            )
+        );
     }
 
     res.success(updatedRoom);
@@ -106,10 +118,16 @@ const updateRoom = asyncHandler(async (req, res, next) => {
 const deleteRoom = asyncHandler(async (req, res, next) => {
     const deletedRoom = await Room.findByIdAndDelete(req.params.id);
     if (!deletedRoom) {
-        return next(new AppError(404, 'NOT_FOUND', 'Room Not Found'));
+        return next(
+            new AppError(
+                StatusCodes.NOT_FOUND,
+                ERROR_CODES.NOT_FOUND,
+                'Room Not Found'
+            )
+        );
     }
 
-    res.status(204).send();
+    res.status(StatusCodes.NO_CONTENT).send();
 });
 
 module.exports = {

@@ -50,7 +50,7 @@ function validateCreateRoom(obj) {
         description: Joi.string().required(),
         isAvailable: Joi.boolean().optional(),
     });
-    return schema.validate(obj);
+    return schema.validate(obj, { abortEarly: false });
 }
 
 // Validate Update Room
@@ -63,8 +63,8 @@ function validateUpdateRoom(obj) {
         floor: Joi.number().integer(),
         description: Joi.string(),
         isAvailable: Joi.boolean(),
-    });
-    return schema.validate(obj);
+    }).min(1);
+    return schema.validate(obj, { abortEarly: false });
 }
 
 RoomSchema.set('toJSON', {
