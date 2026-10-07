@@ -24,7 +24,7 @@ Example response object:
 ```json
 {
   "id": "66a1b2c3d4e5f67890123456",
-  "type": "Double",
+  "roomType": "Double",
   "roomNumber": 204,
   "price": 150,
   "capacity": 2,
@@ -42,7 +42,7 @@ Example response object:
 
 | Field | Rules |
 | --- | --- |
-| `type` | Required; `Single` or `Double`. |
+| `roomType` | Required; `Single` or `Double`. |
 | `roomNumber` | Required number; unique across rooms. |
 | `price` | Required number; must be greater than or equal to `0`. |
 | `capacity` | Required number; must be at least `1`. |
@@ -60,7 +60,7 @@ Optional query parameters can be combined:
 
 ```json
 {
-  "type": "Double",
+  "roomType": "Double",
   "capacity": 2,
   "floor": 2,
   "minPrice": 100,
@@ -72,7 +72,7 @@ Optional query parameters can be combined:
 }
 ```
 
-- `type`: exact match; `Single` or `Double`.
+- `roomType`: exact match; `Single` or `Double`.
 - `capacity`, `floor`: exact numeric matches.
 - `minPrice`, `maxPrice`: inclusive price bounds.
 - `isAvailable`: exact boolean match (`true` or `false`).
@@ -82,7 +82,7 @@ Optional query parameters can be combined:
   `floor`, and `createdAt`; prefix a field with `-` for descending order.
   Defaults to `roomNumber`.
 
-Example request: `GET /api/v1/rooms?type=Double&minPrice=100&isAvailable=true&page=1&limit=20`
+Example request: `GET /api/v1/rooms?roomType=Double&minPrice=100&isAvailable=true&page=1&limit=20`
 
 `200 OK` response:
 
@@ -91,7 +91,7 @@ Example request: `GET /api/v1/rooms?type=Double&minPrice=100&isAvailable=true&pa
   "data": [
     {
       "id": "66a1b2c3d4e5f67890123456",
-      "type": "Double",
+      "roomType": "Double",
       "roomNumber": 204,
       "price": 150,
       "capacity": 2,
@@ -119,7 +119,7 @@ Request body:
 
 ```json
 {
-  "type": "Single",
+  "roomType": "Single",
   "roomNumber": 105,
   "price": 90,
   "capacity": 1,
@@ -129,7 +129,7 @@ Request body:
 }
 ```
 
-`type`, `roomNumber`, `price`, and `capacity` are required. `floor`,
+`roomType`, `roomNumber`, `price`, and `capacity` are required. `floor`,
 `description`, and `isAvailable` are optional. If omitted, `isAvailable` defaults
 to `true`.
 
@@ -139,7 +139,7 @@ to `true`.
 {
   "data": {
     "id": "66a1b2c3d4e5f67890123456",
-    "type": "Single",
+    "roomType": "Single",
     "roomNumber": 105,
     "price": 90,
     "capacity": 1,
@@ -151,6 +151,9 @@ to `true`.
   }
 }
 ```
+
+- `400 Bad Request`: invalid field values.
+- `409 Conflict`: `roomNumber` is already assigned to another room.
 
 ### Get a room
 
@@ -164,7 +167,7 @@ to `true`.
 {
   "data": {
     "id": "66a1b2c3d4e5f67890123456",
-    "type": "Double",
+    "roomType": "Double",
     "roomNumber": 204,
     "price": 150,
     "capacity": 2,
@@ -196,7 +199,7 @@ Request body:
 }
 ```
 
-Accepts one or more of `type`, `roomNumber`, `price`, `capacity`, `floor`,
+Accepts one or more of `roomType`, `roomNumber`, `price`, `capacity`, `floor`,
 `description`, or `isAvailable`. The same schema rules as creation apply to
 provided values.
 
@@ -206,7 +209,7 @@ provided values.
 {
   "data": {
     "id": "66a1b2c3d4e5f67890123456",
-    "type": "Double",
+    "roomType": "Double",
     "roomNumber": 204,
     "price": 110,
     "capacity": 2,
@@ -244,7 +247,7 @@ Proposed common error response:
     "message": "Request validation failed.",
     "details": [
       {
-        "field": "type",
+        "field": "roomType",
         "message": "Must be Single or Double."
       }
     ]
@@ -263,3 +266,9 @@ and `details` may provide more context.
 not define date-based availability or reservation conflict checks because the
 current schema has no booking relationship or date range. Those behaviors should
 be defined with the booking API rather than inferred from this field.
+
+## Known gaps
+
+- List filters (`roomType`, `capacity`, `floor`, `minPrice`, `maxPrice`,
+  `isAvailable`) and `sort` are not implemented yet. Only `page` and `limit` are
+  supported. Planned for a follow-up PR.
