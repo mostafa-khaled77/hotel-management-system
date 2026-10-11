@@ -8,6 +8,7 @@ const AppError = require('../utils/AppError');
 const validationError = require('../middlewares/validationError');
 const { StatusCodes } = require('http-status-codes');
 const ERROR_CODES = require('../constants/errorCodes');
+const getPagination = require('../utils/pagination');
 
 /**
  * @desc  Get All Rooms
@@ -16,12 +17,11 @@ const ERROR_CODES = require('../constants/errorCodes');
  * @access public
  */
 const getAllRooms = asyncHandler(async (req, res) => {
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 20;
+    const {page , limit , skip} = getPagination(req.query)
 
     const roomList = await Room.find()
         .sort('roomNumber')
-        .skip((page - 1) * limit)
+        .skip(skip)
         .limit(limit);
     const total = await Room.countDocuments();
 
