@@ -20,9 +20,10 @@ const errorHandler = (err, req, res, next) => {
     const details = err.details || [];
 
     if (err.code === 11000) {
+        const field = Object.keys(err.keyValue || {})[0] || 'field';
         statusCode = StatusCodes.CONFLICT;
         code = ERROR_CODES.DUPLICATE_KEY;
-        message = 'Room number already exists';
+        message = `${field} already exists`;
     }
 
     res.status(statusCode).json({ error: { code, message, details } });

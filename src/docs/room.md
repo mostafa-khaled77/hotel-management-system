@@ -271,4 +271,4 @@ be defined with the booking API rather than inferred from this field.
 
 - List filters (`roomType`, `capacity`, `floor`, `minPrice`, `maxPrice`,
   `isAvailable`) and `sort` are not implemented yet. Only `page` and `limit` are
-  supported. Planned for a follow-up PR.
+  supported. Planned for a follow-up PR.ww
