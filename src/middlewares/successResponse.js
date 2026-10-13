@@ -1,5 +1,7 @@
+const { StatusCodes } = require('http-status-codes');
+
 module.exports.successResponse = (req, res, next) => {
-    res.success = function (data, statusCode = 200, pagination) {
+    res.success = function (data, statusCode = StatusCodes.OK, pagination) {
         const body = { data };
 
         if (pagination) {
