@@ -36,7 +36,7 @@ const RoomSchema = new mongoose.Schema(
             default: true,
         },
     },
-    { timestamps: true }
+    { timestamps: true },
 );
 
 // Validate Create Room

@@ -11,21 +11,23 @@ const parsePositiveInt = (value, field, defaultValue) => {
             StatusCodes.BAD_REQUEST,
             ERROR_CODES.VALIDATION_ERROR,
             'Validation Error !',
-            [{ field, message: `${field} must be postive integer` }]
+            [{ field, message: `${field} must be postive integer` }],
         );
     }
-    return number
+    return number;
 };
 
-
 const getPagination = (query) => {
-    const page = parsePositiveInt(query.page , "page" , PAGINATION.DEFAULT_PAGE)
-    const requestedLimit = parsePositiveInt(query.limit , "limit" , PAGINATION.DEFAULT_LIMIT)
-    const limit = Math.min( requestedLimit , PAGINATION.MAX_LIMIT);
-    const skip = ((page - 1 ) *limit);
+    const page = parsePositiveInt(query.page, 'page', PAGINATION.DEFAULT_PAGE);
+    const requestedLimit = parsePositiveInt(
+        query.limit,
+        'limit',
+        PAGINATION.DEFAULT_LIMIT,
+    );
+    const limit = Math.min(requestedLimit, PAGINATION.MAX_LIMIT);
+    const skip = (page - 1) * limit;
 
-    return {page , limit , skip}
-
-}
+    return { page, limit, skip };
+};
 
 module.exports = getPagination;

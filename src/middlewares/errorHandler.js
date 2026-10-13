@@ -7,8 +7,8 @@ const notFound = (req, res, next) => {
         new AppError(
             StatusCodes.NOT_FOUND,
             ERROR_CODES.NOT_FOUND,
-            `Can't find this ${req.originalUrl}`
-        )
+            `Can't find this ${req.originalUrl}`,
+        ),
     );
 };
 

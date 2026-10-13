@@ -17,7 +17,7 @@ const getPagination = require('../utils/pagination');
  * @access public
  */
 const getAllRooms = asyncHandler(async (req, res) => {
-    const {page , limit , skip} = getPagination(req.query)
+    const { page, limit, skip } = getPagination(req.query);
 
     const roomList = await Room.find()
         .sort('roomNumber')
@@ -46,8 +46,8 @@ const getRoomById = asyncHandler(async (req, res, next) => {
             new AppError(
                 StatusCodes.NOT_FOUND,
                 ERROR_CODES.NOT_FOUND,
-                'Room Not Found'
-            )
+                'Room Not Found',
+            ),
         );
     }
     res.success(room);
@@ -93,7 +93,7 @@ const updateRoom = asyncHandler(async (req, res, next) => {
     const updatedRoom = await Room.findByIdAndUpdate(
         req.params.id,
         { $set: req.body },
-        { returnDocument: 'after', runValidators: true }
+        { returnDocument: 'after', runValidators: true },
     );
 
     if (!updatedRoom) {
@@ -101,8 +101,8 @@ const updateRoom = asyncHandler(async (req, res, next) => {
             new AppError(
                 StatusCodes.NOT_FOUND,
                 ERROR_CODES.NOT_FOUND,
-                'Room Not Found'
-            )
+                'Room Not Found',
+            ),
         );
     }
 
@@ -122,8 +122,8 @@ const deleteRoom = asyncHandler(async (req, res, next) => {
             new AppError(
                 StatusCodes.NOT_FOUND,
                 ERROR_CODES.NOT_FOUND,
-                'Room Not Found'
-            )
+                'Room Not Found',
+            ),
         );
     }
 

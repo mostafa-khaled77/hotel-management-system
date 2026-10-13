@@ -1,5 +1,5 @@
 const { StatusCodes } = require('http-status-codes');
-const AppError = require('../utils/AppError');
+const AppError = require('./AppError');
 const ERROR_CODES = require('../constants/errorCodes');
 
 const validationError = (error) => {
@@ -11,7 +11,7 @@ const validationError = (error) => {
         StatusCodes.BAD_REQUEST,
         ERROR_CODES.VALIDATION_ERROR,
         'Validation Failed !',
-        details
+        details,
     );
 };
 module.exports = validationError;

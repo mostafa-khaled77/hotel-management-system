@@ -10,7 +10,11 @@ const validateObjectId = require('../middlewares/validateObjectId');
 const router = express.Router();
 
 // api/v1/rooms
-router.route('/').get(getAllRooms).post(createNewRoom);
+// prettier-ignore
+router
+    .route('/')
+    .get(getAllRooms)
+    .post(createNewRoom);
 
 // api/v1/rooms/:id
 router
