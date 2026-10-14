@@ -1,5 +1,6 @@
 const Joi = require('joi');
 const mongoose = require('mongoose');
+const { toJSONPlugin } = require('../config/toJSON.plugin');
 
 const RoomSchema = new mongoose.Schema(
     {
@@ -67,14 +68,7 @@ function validateUpdateRoom(obj) {
     return schema.validate(obj, { abortEarly: false });
 }
 
-RoomSchema.set('toJSON', {
-    transform: (doc, ret) => {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-    },
-});
+RoomSchema.plugin(toJSONPlugin);
 
 const Room = mongoose.model('Room', RoomSchema);
 

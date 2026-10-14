@@ -5,7 +5,7 @@ const {
     validateUpdateRoom,
 } = require('../models/room.model');
 const AppError = require('../utils/AppError');
-const validationError = require('../middlewares/validationError');
+const validationError = require('../utils/validationError');
 const { StatusCodes } = require('http-status-codes');
 const ERROR_CODES = require('../constants/errorCodes');
 const getPagination = require('../utils/pagination');
