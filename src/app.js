@@ -14,6 +14,7 @@ app.use(successResponse);
 // Routes
 app.use('/api/v1/rooms', require('./routes/room'));
 app.use('/api/v1/guests', require('./routes/guest'));
+app.use('/api/v1/bookings', require('./routes/bookings'));
 
 // Error Handlers
 app.use(notFound);
