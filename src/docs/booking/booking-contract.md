@@ -13,7 +13,6 @@ This document defines the API contract for managing hotel room bookings.
 
 It specifies the available endpoints, request and response schemas, validation rules, HTTP status codes, error responses, and booking business rules.
 
-The contract is implementation-independent. Controllers, services, and database models must follow this contract without exposing internal implementation details to API consumers.
 
 ## 2. Scope and Assumptions
 
@@ -487,9 +486,4 @@ The following invariants must always hold:
 
 ## 15. Decisions Pending Review
 
-The following decisions must be confirmed before the contract is considered final:
-
-- [ ] Final booking status enum and allowed transitions.
-- [ ] Which booking statuses block room availability.
-- [ ] Whether cancellation is allowed after check-in or after a specified deadline.
-- [ ] Whether
+i'll create a file which discuss this action sepratly
