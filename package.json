@@ -25,7 +25,10 @@
         "express-async-handler": "^1.2.0",
         "http-status-codes": "^2.3.0",
         "joi": "^18.2.9",
-        "mongoose": "^9.10.3"
+        "jsonwebtoken": "^9.0.3",
+        "mongoose": "^9.10.3",
+        "passport": "^0.7.0",
+        "passport-google-oauth20": "^2.0.0"
     },
     "devDependencies": {
         "@eslint/js": "^10.0.1",
