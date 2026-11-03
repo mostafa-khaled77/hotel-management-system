@@ -5,7 +5,6 @@ const logger = require('./middlewares/logger');
 const cookieParser = require('cookie-parser');
 require('./config/passport');
 
-
 // Init App
 const app = express();
 
@@ -18,7 +17,7 @@ app.use(successResponse);
 // Routes
 app.use('/api/v1/rooms', require('./routes/room'));
 app.use('/api/v1/guests', require('./routes/guest'));
-app.use('/api/v1/auth', require('./routes/auth')); 
+app.use('/api/v1/auth', require('./routes/auth'));
 
 // Error Handlers
 app.use(notFound);

@@ -21,7 +21,7 @@ router
 router
     .route('/:id')
     .all(validateObjectId)
-    .get(verifyTokenAndAdmin ,getGuestById)
+    .get(verifyTokenAndAdmin, getGuestById)
     .patch(verifyTokenAndAdmin, updateGuest)
     .delete(verifyTokenAndAdmin, deleteGuest);
 
