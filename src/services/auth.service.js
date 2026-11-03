@@ -14,10 +14,19 @@ const findOrCreateGoogleUser = async (profile) => {
             'Google account must provide a valid email address.',
         );
     }
-    let user = await User.findOne({ googleId });
-    if (!user) {
-        const name = profile.displayName || 'Google User';
-        const userName = name.slice(0, 40);
+
+    let user = await User.findOne({ $or: [{ googleId }, { email }] });
+
+    if (user) {
+        if (!user.googleId) {
+            user.googleId = googleId;
+            await user.save();
+        }
+    } else {
+        let userName = profile.displayName || 'Google User';
+        if (userName.trim().length < 2) {
+            userName = userName + '_User';
+        }
         user = await User.create({
             googleId,
             userName,

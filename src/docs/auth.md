@@ -6,9 +6,10 @@ This document outlines the architecture, implementation details, and API endpoin
 
 ## 1. Architecture & Security Decisions
 
-- **Stateless Authentication:** `express-session` has been completely removed. Sessions are disabled (`session: false`) across all Passport configurations to enforce a purely stateless REST API design using JWT.
+- **Stateless Authentication:** Sessions are entirely omitted: every Passport authentication call sets `session: false`, enforcing a stateless REST API design using JWT. The application does not use `express-session`.
+- **Secure Token Storage:** The JWT is not exposed in the JSON response body. It is sent in an `httpOnly` cookie named `token`, which prevents client-side JavaScript from reading the token. The cookie uses `secure: true` in production and `false` otherwise, `sameSite: 'strict'` in production and `'lax'` otherwise, and a 30-day `maxAge` matching the default JWT expiration (`JWT_EXPIRES_IN` defaults to `30d`).
 - **Centralized Error Handling:** All errors throw custom `AppError` instances handled uniformly by custom error-handling middleware, ensuring strict compliance with the project's API Response Contract.
-- **Defensive Programming in Services:** 
+- **Defensive Programming in Services:**
   - Email presence verification is strictly enforced during Google account parsing.
   - User names fetched from Google profiles are safely truncated (`maxlength: 40`) to prevent database schema validation crashes.
 
@@ -21,7 +22,7 @@ This document outlines the architecture, implementation details, and API endpoin
 3. **Strategy Validation:** Passport validates the token, extracts user profile information, and triggers the `findOrCreateGoogleUser` service:
    - If the user exists via `googleId`, they are retrieved.
    - If not, a new user record is provisioned in MongoDB with the `GUEST` role by default.
-4. **Token Generation:** Upon successful authentication, a signed JWT containing the user's `id` and `role` is generated and returned alongside user details inside the standardized success envelope.
+4. **Token Generation:** Upon successful authentication, a signed JWT containing the user's `id` and `role` is generated and attached to the response in the `httpOnly` `token` cookie. User profile data is returned in the standardized JSON success envelope; the JWT is not included in the JSON body.
 5. **Failure Handling:** If authentication is cancelled or fails, requests are redirected to a dedicated `/login-failed` endpoint that returns a standardized `401 Unauthorized` JSON error.
 
 ---
@@ -31,7 +32,7 @@ This document outlines the architecture, implementation details, and API endpoin
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/v1/auth/google` | Initiates the Google OAuth2 authentication flow. |
-| `GET` | `/api/v1/auth/google/callback` | Handles the Google redirect, processes user creation/lookup, and returns the JWT token. |
+| `GET` | `/api/v1/auth/google/callback` | Handles the Google redirect and processes user creation/lookup. Attaches the JWT in an `httpOnly` `token` cookie and returns user profile data in the JSON response body. |
 | `GET` | `/api/v1/auth/login-failed` | Returns a standardized `401` error response if Google authentication fails or is cancelled. |
 
 ---
@@ -43,7 +44,6 @@ This document outlines the architecture, implementation details, and API endpoin
 {
   "data": {
     "message": "Logged in successfully",
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVC...",
     "user": {
       "id": "66a1b2c3d4e5f67890123456",
       "userName": "Mostafa Khaled",
@@ -55,8 +55,7 @@ This document outlines the architecture, implementation details, and API endpoin
   }
 }
 ```
-
----
+--- 
 
 ## 5. Response Contracts With Error
 
@@ -70,16 +69,3 @@ This document outlines the architecture, implementation details, and API endpoin
   }
 }
 ```
-
----
-
-### Next Phase: Authentication & Authorization
-
-- #### Implement `authenticate` (Protect) Middleware:
-  - Extract and parse `Authorization: Bearer <token>` header.
-  - Verify JWT payload integrity using `jsonwebtoken.verify`.
-  - Fetch user from database using `findUserById` to ensure active status.
-  - Attach authenticated user object to `req.user`.
-- #### Implement `authorize(...roles)` Middleware:
-  - Restrict access to endpoints based on user roles (`ADMIN`, `GUEST`, etc.).
-  - Handle unauthorized access states using custom `AppError`.
