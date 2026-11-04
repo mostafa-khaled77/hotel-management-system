@@ -3,6 +3,8 @@ const AppError = require('./AppError');
 const ERROR_CODES = require('../constants/errorCodes');
 
 const validationError = (error) => {
+    console.log(error);
+    
     const details = error.details.map((d) => ({
         field: d.path.join('.'),
         message: d.message,

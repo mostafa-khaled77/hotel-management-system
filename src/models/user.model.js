@@ -1,6 +1,7 @@
 const { default: mongoose } = require('mongoose');
 const { toJSONPlugin } = require('../config/toJSON.plugin');
 const { ROLES } = require('../constants/roles');
+const Joi = require('joi');
 
 const UserSchema = new mongoose.Schema(
     {
@@ -36,7 +37,7 @@ const UserSchema = new mongoose.Schema(
         role: {
             type: String,
             enum: Object.values(ROLES),
-            default: ROLES.GUEST,
+            default: ROLES.User,
         },
     },
     { timestamps: true },
@@ -45,6 +46,19 @@ const UserSchema = new mongoose.Schema(
 UserSchema.plugin(toJSONPlugin);
 const User = mongoose.model('User', UserSchema);
 
+
+function validateUpdateUser(obj) {
+    const schema = Joi.object({
+        userName: Joi.string().trim().min(2).max(40),
+        profileImage: Joi.string().trim().allow(''),
+        phone: Joi.string().trim().allow(''),
+    }).min(1);
+
+    return schema.validate(obj, { abortEarly: false });
+}
+
+
 module.exports = {
     User,
+    validateUpdateUser,
 };

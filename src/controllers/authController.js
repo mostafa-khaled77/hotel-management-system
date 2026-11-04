@@ -13,10 +13,15 @@ const googleCallback = asyncHandler(async (req, res) => {
         );
     }
     const token = generateToken(user);
+    res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+    });
     res.success(
         {
             message: 'Logged in successfully',
-            token,
             user: {
                 id: user.id,
                 userName: user.userName,
@@ -30,7 +35,7 @@ const googleCallback = asyncHandler(async (req, res) => {
     );
 });
 
-const loginFailed = asyncHandler(async () => {
+const loginFailed = asyncHandler(async (req, res, next) => {
     throw new AppError(
         StatusCodes.UNAUTHORIZED,
         ERROR_CODES.UNAUTHORIZED,

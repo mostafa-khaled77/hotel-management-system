@@ -8,8 +8,10 @@ const {
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/AppError');
 const ERROR_CODES = require('../constants/errorCodes');
+const GUEST_SORT = require('../constants/guestSort');
 const validationError = require('../utils/validationError');
 const guestFilter = require('../utils/guestFilter');
+const getSort = require('../utils/sort');
 
 /**
  * @desc    Get All Guests
@@ -21,7 +23,11 @@ const guestFilter = require('../utils/guestFilter');
 const getAllGuests = asyncHandler(async (req, res) => {
     const { page, limit, skip } = getPagination(req.query);
     const filter = guestFilter(req.query);
-    const sortBy = req.query.sort || 'lastName firstName';
+    const sortBy = getSort(
+        req.query.sort,
+        GUEST_SORT.ALLOWED_FIELDS,
+        GUEST_SORT.DEFAULT,
+    );
     const guestsList = await Guest.find(filter)
         .sort(sortBy)
         .skip(skip)
