@@ -46,7 +46,6 @@ const UserSchema = new mongoose.Schema(
 UserSchema.plugin(toJSONPlugin);
 const User = mongoose.model('User', UserSchema);
 
-
 function validateUpdateUser(obj) {
     const schema = Joi.object({
         userName: Joi.string().trim().min(2).max(40),
@@ -56,7 +55,6 @@ function validateUpdateUser(obj) {
 
     return schema.validate(obj, { abortEarly: false });
 }
-
 
 module.exports = {
     User,

@@ -21,7 +21,7 @@ router
     .route('/:id')
     .all(validateObjectId)
     .get(getRoomById)
-    .patch(verifyTokenAndAdmin , updateRoom)
-    .delete(verifyTokenAndAdmin , deleteRoom);
+    .patch(verifyTokenAndAdmin, updateRoom)
+    .delete(verifyTokenAndAdmin, deleteRoom);
 
 module.exports = router;

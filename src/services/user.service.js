@@ -20,8 +20,8 @@ const getSelfUserService = async (userId) => {
     return user;
 };
 
-// Update User 
-const updateUserService = async (userId , body) => {
+// Update User
+const updateUserService = async (userId, body) => {
     const { error } = validateUpdateUser(body);
     if (error) {
         throw validationError(error);
@@ -30,7 +30,7 @@ const updateUserService = async (userId , body) => {
         userId,
         { $set: body },
         { returnDocument: 'after', runValidators: true },
-    ).select("-role");
+    ).select('-role');
 
     if (!updatedUser) {
         throw new AppError(
@@ -39,7 +39,7 @@ const updateUserService = async (userId , body) => {
             'User Not Found',
         );
     }
-    return updatedUser
+    return updatedUser;
 };
 
 // Get All Users
@@ -47,10 +47,10 @@ const getAllUsersService = async (query) => {
     const { page, limit, skip } = getPagination(query);
     const [users, total] = await Promise.all([
         User.find().skip(skip).limit(limit).select('-role'),
-        User.countDocuments()
+        User.countDocuments(),
     ]);
     return {
-        data:users,
+        data: users,
         pagination: {
             page,
             limit,
@@ -63,12 +63,12 @@ const getAllUsersService = async (query) => {
 // Delete An user
 const deleteUsersService = async (userId) => {
     const deleteUser = await User.findByIdAndDelete(userId);
-    if(!deleteUser){
+    if (!deleteUser) {
         throw new AppError(
             StatusCodes.NOT_FOUND,
             ERROR_CODES.NOT_FOUND,
-            "User Not Found"
-        )
+            'User Not Found',
+        );
     }
     return deleteUser;
 };
@@ -86,14 +86,13 @@ const getUserByIdService = async (userId) => {
     return getSpecificUser;
 };
 
-
 // Update User Role
-const updateUserRoleService = async (userId , role) => {
+const updateUserRoleService = async (userId, role) => {
     const updatedUser = await User.findByIdAndUpdate(
         userId,
-        {role},
-        {new:true , runValidators:true}
-    )
+        { role },
+        { new: true, runValidators: true },
+    );
     if (!updatedUser) {
         throw new AppError(
             StatusCodes.NOT_FOUND,
@@ -110,5 +109,5 @@ module.exports = {
     getAllUsersService,
     deleteUsersService,
     getUserByIdService,
-    updateUserRoleService
+    updateUserRoleService,
 };

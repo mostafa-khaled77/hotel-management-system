@@ -1,10 +1,16 @@
 const asyncHandler = require('express-async-handler');
-const { getSelfUserService, updateUserService, getAllUsersService ,deleteUsersService, getUserByIdService, updateUserRoleService } = require('../services/user.service');
+const {
+    getSelfUserService,
+    updateUserService,
+    getAllUsersService,
+    deleteUsersService,
+    getUserByIdService,
+    updateUserRoleService,
+} = require('../services/user.service');
 const { StatusCodes } = require('http-status-codes');
 
-
 /**
- * @desc  Get User Profile   
+ * @desc  Get User Profile  
  * @route /api/v1/users/me
  * @method GET
  * @access private(only user itself)
@@ -13,7 +19,6 @@ const getSelfUser = asyncHandler(async (req, res) => {
     const user = await getSelfUserService(req.user.id);
     res.success(user);
 });
-
 
 /**
  * @desc  Update User
@@ -26,7 +31,6 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     res.success(updatedUser, StatusCodes.OK);
 });
 
-
 /**
  * @desc  Get All Users
  * @route /api/v1/users
@@ -37,7 +41,6 @@ const getAllUsers = asyncHandler(async (req, res) => {
     const { data, pagination } = await getAllUsersService(req.query);
     res.success(data, StatusCodes.OK, pagination);
 });
-
 
 /**
  * @desc  Delete User
@@ -50,7 +53,6 @@ const deleteAnUser = asyncHandler(async (req, res) => {
     res.status(StatusCodes.NO_CONTENT).send();
 });
 
-
 /**
  * @desc  Get User By Id
  * @route /api/v1/users/:id
@@ -62,8 +64,6 @@ const getUserById = asyncHandler(async (req, res) => {
     res.success(getSpecificUser);
 });
 
-
-
 /**
  * @desc  Update User Role
  * @route /api/v1/users/:id/role
@@ -72,7 +72,7 @@ const getUserById = asyncHandler(async (req, res) => {
  */
 const updateUserRole = asyncHandler(async (req, res) => {
     const { role } = req.body;
-    const updatedUser = await updateUserRoleService(req.params.id , role)
+    const updatedUser = await updateUserRoleService(req.params.id, role);
     res.success(updatedUser);
 });
 

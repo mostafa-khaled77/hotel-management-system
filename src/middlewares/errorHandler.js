@@ -17,7 +17,7 @@ const errorHandler = (err, req, res, next) => {
     console.log(err);
     let statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     let code = err.code || err.errorCode || ERROR_CODES.INTERNAL_SERVER_ERROR;
-    
+
     let message = err.statusCode ? err.message : 'Something went wrong.';
     const details = err.details || [];
 
