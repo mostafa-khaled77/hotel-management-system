@@ -1,14 +1,17 @@
 const asyncHandler = require('express-async-handler');
 const {
-    Room,
     validateCreateRoom,
     validateUpdateRoom,
 } = require('../models/room.model');
-const AppError = require('../utils/AppError');
 const validationError = require('../utils/validationError');
 const { StatusCodes } = require('http-status-codes');
-const ERROR_CODES = require('../constants/errorCodes');
-const getPagination = require('../utils/pagination');
+const {
+    createRoomService,
+    findRoomByIdService,
+    getAllRoomsService,
+    updateRoomService,
+    deleteRoomService,
+} = require('../services/room.service');
 
 /**
  * @desc  Get All Rooms
@@ -17,20 +20,8 @@ const getPagination = require('../utils/pagination');
  * @access public
  */
 const getAllRooms = asyncHandler(async (req, res) => {
-    const { page, limit, skip } = getPagination(req.query);
-
-    const roomList = await Room.find()
-        .sort('roomNumber')
-        .skip(skip)
-        .limit(limit);
-    const total = await Room.countDocuments();
-
-    res.success(roomList, StatusCodes.OK, {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-    });
+    const { roomList, pagination } = await getAllRoomsService(req.query);
+    res.success(roomList, StatusCodes.OK, pagination);
 });
 
 /**
@@ -39,17 +30,8 @@ const getAllRooms = asyncHandler(async (req, res) => {
  * @method GET
  * @access public
  */
-const getRoomById = asyncHandler(async (req, res, next) => {
-    const room = await Room.findById(req.params.id);
-    if (!room) {
-        return next(
-            new AppError(
-                StatusCodes.NOT_FOUND,
-                ERROR_CODES.NOT_FOUND,
-                'Room Not Found',
-            ),
-        );
-    }
+const getRoomById = asyncHandler(async (req, res) => {
+    const room = await findRoomByIdService(req.params.id);
     res.success(room);
 });
 
@@ -57,25 +39,14 @@ const getRoomById = asyncHandler(async (req, res, next) => {
  * @desc  Create New Room
  * @route /api/v1/rooms
  * @method POST
- * @access public
+ * @access private(only Admins)
  */
 const createNewRoom = asyncHandler(async (req, res, next) => {
     const { error } = validateCreateRoom(req.body);
     if (error) {
         return next(validationError(error));
     }
-
-    const room = new Room({
-        roomType: req.body.roomType,
-        roomNumber: req.body.roomNumber,
-        price: req.body.price,
-        capacity: req.body.capacity,
-        floor: req.body.floor,
-        description: req.body.description,
-        isAvailable: req.body.isAvailable,
-    });
-    const result = await room.save();
-
+    const result = await createRoomService(req.body);
     res.success(result, StatusCodes.CREATED);
 });
 
@@ -83,29 +54,14 @@ const createNewRoom = asyncHandler(async (req, res, next) => {
  * @desc  Update Room
  * @route /api/v1/rooms/:id
  * @method PATCH
- * @access public
+ * @access private(only Admins)
  */
 const updateRoom = asyncHandler(async (req, res, next) => {
     const { error } = validateUpdateRoom(req.body);
     if (error) {
         return next(validationError(error));
     }
-    const updatedRoom = await Room.findByIdAndUpdate(
-        req.params.id,
-        { $set: req.body },
-        { returnDocument: 'after', runValidators: true },
-    );
-
-    if (!updatedRoom) {
-        return next(
-            new AppError(
-                StatusCodes.NOT_FOUND,
-                ERROR_CODES.NOT_FOUND,
-                'Room Not Found',
-            ),
-        );
-    }
-
+    const updatedRoom = await updateRoomService(req.params.id, req.body);
     res.success(updatedRoom);
 });
 
@@ -113,20 +69,10 @@ const updateRoom = asyncHandler(async (req, res, next) => {
  * @desc  Delete Room
  * @route /api/v1/rooms/:id
  * @method DELETE
- * @access public
+ * @access private(only Admins)
  */
-const deleteRoom = asyncHandler(async (req, res, next) => {
-    const deletedRoom = await Room.findByIdAndDelete(req.params.id);
-    if (!deletedRoom) {
-        return next(
-            new AppError(
-                StatusCodes.NOT_FOUND,
-                ERROR_CODES.NOT_FOUND,
-                'Room Not Found',
-            ),
-        );
-    }
-
+const deleteRoom = asyncHandler(async (req, res) => {
+    const deletedRoom = await deleteRoomService(req.params.id);
     res.status(StatusCodes.NO_CONTENT).send();
 });
 

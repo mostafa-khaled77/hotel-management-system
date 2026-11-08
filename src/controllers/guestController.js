@@ -1,56 +1,37 @@
 const asyncHandler = require('express-async-handler');
-const getPagination = require('../utils/pagination');
 const {
-    Guest,
     validateCreateGuest,
     validateUpdateGuest,
 } = require('../models/guest.model');
 const { StatusCodes } = require('http-status-codes');
-const AppError = require('../utils/AppError');
-const ERROR_CODES = require('../constants/errorCodes');
 const validationError = require('../utils/validationError');
-const guestFilter = require('../utils/guestFilter');
+const {
+    getAllGuestsService,
+    getGuestByIdService,
+    createNewGuestService,
+    updateGuestService,
+    deleteGuestService,
+} = require('../services/guest.service');
 
 /**
  * @desc    Get All Guests
  * @route   api/v1/guests
  * @method  GET
- *  @access  public
+ *  @access  private(only admins)
  */
-
 const getAllGuests = asyncHandler(async (req, res) => {
-    const { page, limit, skip } = getPagination(req.query);
-    const filter = guestFilter(req.query);
-    const sortBy = req.query.sort || 'lastName firstName';
-    const guestsList = await Guest.find(filter)
-        .sort(sortBy)
-        .skip(skip)
-        .limit(limit);
-    const total = await Guest.countDocuments(filter);
-    res.success(guestsList, StatusCodes.OK, {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-    });
+    const { guestsList, pagination } = await getAllGuestsService(req.query);
+    res.success(guestsList, StatusCodes.OK, pagination);
 });
 
 /**
  * @desc    Find Guests By Id
  * @route   api/v1/guests/:id
  * @method  GET
- *  @access  public
+ *  @access  private(only admins)
  */
-
 const getGuestById = asyncHandler(async (req, res) => {
-    const guest = await Guest.findById(req.params.id);
-    if (!guest) {
-        throw new AppError(
-            StatusCodes.NOT_FOUND,
-            ERROR_CODES.NOT_FOUND,
-            'Guest not found !',
-        );
-    }
+    const guest = await getGuestByIdService(req.params.id);
     res.success(guest);
 });
 
@@ -58,22 +39,14 @@ const getGuestById = asyncHandler(async (req, res) => {
  * @desc    Create New Guests
  * @route   api/v1/guests
  * @method  POST
- *  @access  public
+ *  @access  private(only admins)
  */
-
 const createNewGuest = asyncHandler(async (req, res, next) => {
     const { error } = validateCreateGuest(req.body);
     if (error) {
         return next(validationError(error));
     }
-    const guest = new Guest({
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
-        phone: req.body.phone,
-    });
-
-    const result = await guest.save();
+    const result = await createNewGuestService(req.body);
     res.success(result, StatusCodes.CREATED);
 });
 
@@ -81,26 +54,14 @@ const createNewGuest = asyncHandler(async (req, res, next) => {
  * @desc    Update Guests
  * @route   api/v1/guests/:id
  * @method  PATCH
- *  @access  public
+ *  @access  private(only admins)
  */
-
 const updateGuest = asyncHandler(async (req, res, next) => {
     const { error } = validateUpdateGuest(req.body);
     if (error) {
         return next(validationError(error));
     }
-    const updatedGuest = await Guest.findByIdAndUpdate(
-        req.params.id,
-        { $set: req.body },
-        { returnDocument: 'after', runValidators: true },
-    );
-    if (!updatedGuest) {
-        throw new AppError(
-            StatusCodes.NOT_FOUND,
-            ERROR_CODES.NOT_FOUND,
-            'Guest not found',
-        );
-    }
+    const updatedGuest = await updateGuestService(req.params.id, req.body);
     res.success(updatedGuest);
 });
 
@@ -108,18 +69,10 @@ const updateGuest = asyncHandler(async (req, res, next) => {
  * @desc    Delete Guests
  * @route   api/v1/guests/:id
  * @method  Delete
- *  @access  public
+ *  @access  private(only admins)
  */
-
 const deleteGuest = asyncHandler(async (req, res) => {
-    const deletedGuest = await Guest.findByIdAndDelete(req.params.id);
-    if (!deletedGuest) {
-        throw new AppError(
-            StatusCodes.NOT_FOUND,
-            ERROR_CODES.NOT_FOUND,
-            'Guest Not Found',
-        );
-    }
+    const deletedGuest = await deleteGuestService(req.params.id);
     res.status(StatusCodes.NO_CONTENT).send();
 });
 
