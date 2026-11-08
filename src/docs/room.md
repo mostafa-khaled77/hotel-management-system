@@ -1,90 +1,85 @@
-# Room API Contract
+# Hotel Rooms Module API
 
-This contract is based on the Mongoose `Room` schema in
-[`src/models/room.model.js`](../models/room.model.js). The routes and response
-conventions below are proposed; the current Express app does not yet register
-room routes or define API-wide response conventions.
+This document describes the room endpoints as currently implemented by
+`src/routes/room.js`, `src/controllers/roomController.js`, and
+`src/models/room.model.js`.
 
-## Endpoint index
-
-- [List rooms](#list-rooms) — `GET /api/v1/rooms`
-- [Create a room](#create-a-room) — `POST /api/v1/rooms`
-- [Get a room](#get-a-room) — `GET /api/v1/rooms/:id`
-- [Update a room](#update-a-room) — `PATCH /api/v1/rooms/:id`
-- [Delete a room](#delete-a-room) — `DELETE /api/v1/rooms/:id`
-
-## Base URL
+## Base path
 
 `/api/v1/rooms`
 
-## Room object
+## Access and endpoints
 
-Example response object:
+| Method | Endpoint | Access | Description |
+| --- | --- | --- | --- |
+| `GET` | `/api/v1/rooms` | Public | Lists rooms in ascending `roomNumber` order. |
+| `GET` | `/api/v1/rooms/:id` | Public | Gets one room by MongoDB ObjectId. |
+| `POST` | `/api/v1/rooms` | Private — Admin only | Creates a room after Joi validation. |
+| `PATCH` | `/api/v1/rooms/:id` | Private — Admin only | Updates one or more room fields after Joi validation. |
+| `DELETE` | `/api/v1/rooms/:id` | Private — Admin only | Deletes a room. |
 
-```json
-{
-  "id": "66a1b2c3d4e5f67890123456",
-  "roomType": "Double",
-  "roomNumber": 204,
-  "price": 150,
-  "capacity": 2,
-  "floor": 2,
-  "description": "City view",
-  "isAvailable": true,
-  "createdAt": "2026-10-04T01:00:00.000Z",
-  "updatedAt": "2026-10-04T01:00:00.000Z"
-}
-```
+The write routes use `verifyTokenAndAdmin`. Send a valid JWT using
+`Authorization: Bearer <token>` or the `token` cookie. The decoded user's role
+must be `admin`. A missing or invalid token returns `401 Unauthorized`; an
+authenticated non-admin receives `403 Forbidden`.
 
-`id` is the MongoDB document ID serialized in place of `_id`. `createdAt` and
-`updatedAt` are set by Mongoose timestamps. Clients must not send `id`, `_id`,
-`createdAt`, or `updatedAt` in create or update bodies.
+For routes containing `:id`, `validateObjectId` runs before the route handler.
+An invalid MongoDB ObjectId returns `400 Bad Request`.
 
-| Field | Rules |
-| --- | --- |
-| `roomType` | Required; `Single` or `Double`. |
-| `roomNumber` | Required number; unique across rooms. |
-| `price` | Required number; must be greater than or equal to `0`. |
-| `capacity` | Required number; must be at least `1`. |
-| `floor` | Optional number; no additional schema constraint. |
-| `description` | Optional string; trimmed by the model. |
-| `isAvailable` | Optional boolean; defaults to `true` on creation. |
+## Room schema
 
-## Endpoints
+The Mongoose `Room` schema defines these fields:
+
+| Field | Mongoose type | Required | Mongoose constraints | Default |
+| --- | --- | --- | --- | --- |
+| `roomType` | `String` | Yes | Enum: `Single`, `Double` | — |
+| `roomNumber` | `Number` | Yes | Minimum `1`; unique | — |
+| `price` | `Number` | Yes | Minimum `0` | — |
+| `capacity` | `Number` | Yes | Minimum `1` | — |
+| `floor` | `Number` | No | None | — |
+| `description` | `String` | No | Trimmed | — |
+| `isAvailable` | `Boolean` | No | None | `true` |
+
+Mongoose timestamps add `createdAt` and `updatedAt`. The model's JSON
+transformation exposes `_id` as the string `id` and removes `_id` and `__v`.
+
+## Joi validation
+
+Joi validates request bodies in the create and update handlers. In addition
+to these rules, Joi's object schema rejects unknown fields.
+
+| Field | Create (`POST`) | Update (`PATCH`) |
+| --- | --- | --- |
+| `roomType` | Required string; `Single` or `Double` | Optional string; `Single` or `Double` |
+| `roomNumber` | Required integer; minimum `1` | Optional integer; minimum `1` |
+| `price` | Required number; minimum `0` | Optional number; minimum `0` |
+| `capacity` | Required integer; minimum `1` | Optional integer; minimum `1` |
+| `floor` | Optional integer | Optional integer |
+| `description` | Required string | Optional string |
+| `isAvailable` | Optional boolean | Optional boolean |
+
+The update body must contain at least one recognized field. Notably,
+`description` is optional in the Mongoose schema but required by Joi for room
+creation. `roomNumber` uniqueness is enforced by MongoDB's unique index rather
+than by a Joi validation rule.
+
+## Endpoint details
 
 ### List rooms
 
-`GET /api/v1/rooms`
+`GET /api/v1/rooms` — **Public**
 
-Optional query parameters can be combined:
+Supported query parameters:
 
-```json
-{
-  "roomType": "Double",
-  "capacity": 2,
-  "floor": 2,
-  "minPrice": 100,
-  "maxPrice": 200,
-  "isAvailable": true,
-  "page": 1,
-  "limit": 20,
-  "sort": "roomNumber"
-}
-```
+| Parameter | Type and behavior |
+| --- | --- |
+| `page` | Positive integer; defaults to `1`. |
+| `limit` | Positive integer; defaults to `20`; values above `100` are capped at `100`. |
 
-- `roomType`: exact match; `Single` or `Double`.
-- `capacity`, `floor`: exact numeric matches.
-- `minPrice`, `maxPrice`: inclusive price bounds.
-- `isAvailable`: exact boolean match (`true` or `false`).
-- `page`: 1-based page number; defaults to `1`.
-- `limit`: results per page; defaults to `20`, maximum `100`.
-- `sort`: comma-separated fields from `roomNumber`, `price`, `capacity`,
-  `floor`, and `createdAt`; prefix a field with `-` for descending order.
-  Defaults to `roomNumber`.
+The results are sorted by `roomNumber` ascending. No filters or client-selected
+sort options are implemented.
 
-Example request: `GET /api/v1/rooms?roomType=Double&minPrice=100&isAvailable=true&page=1&limit=20`
-
-`200 OK` response:
+**Success — `200 OK`**
 
 ```json
 {
@@ -111,11 +106,23 @@ Example request: `GET /api/v1/rooms?roomType=Double&minPrice=100&isAvailable=tru
 }
 ```
 
+Invalid `page` or `limit` values return `400 Bad Request`.
+
+### Get a room
+
+`GET /api/v1/rooms/:id` — **Public**
+
+Returns the matching room in the `data` response envelope.
+
+- `200 OK`: room found.
+- `400 Bad Request`: `:id` is not a valid MongoDB ObjectId.
+- `404 Not Found`: no room matches the valid ID.
+
 ### Create a room
 
-`POST /api/v1/rooms`
+`POST /api/v1/rooms` — **Private (Admin only)**
 
-Request body:
+Example request body:
 
 ```json
 {
@@ -124,151 +131,59 @@ Request body:
   "price": 90,
   "capacity": 1,
   "floor": 1,
-  "description": "Quiet room near the elevator",
+  "description": "Quiet room",
   "isAvailable": true
 }
 ```
 
-`roomType`, `roomNumber`, `price`, and `capacity` are required. `floor`,
-`description`, and `isAvailable` are optional. If omitted, `isAvailable` defaults
-to `true`.
+The request body follows the create Joi rules above.
 
-`201 Created` response:
-
-```json
-{
-  "data": {
-    "id": "66a1b2c3d4e5f67890123456",
-    "roomType": "Single",
-    "roomNumber": 105,
-    "price": 90,
-    "capacity": 1,
-    "floor": 1,
-    "description": "Quiet room near the elevator",
-    "isAvailable": true,
-    "createdAt": "2026-10-04T01:00:00.000Z",
-    "updatedAt": "2026-10-04T01:00:00.000Z"
-  }
-}
-```
-
-- `400 Bad Request`: invalid field values.
-- `409 Conflict`: `roomNumber` is already assigned to another room.
-
-### Get a room
-
-`GET /api/v1/rooms/:id`
-
-`:id` is the MongoDB document ID.
-
-`200 OK` response:
-
-```json
-{
-  "data": {
-    "id": "66a1b2c3d4e5f67890123456",
-    "roomType": "Double",
-    "roomNumber": 204,
-    "price": 150,
-    "capacity": 2,
-    "floor": 2,
-    "description": "City view",
-    "isAvailable": true,
-    "createdAt": "2026-10-04T01:00:00.000Z",
-    "updatedAt": "2026-10-04T01:00:00.000Z"
-  }
-}
-```
-
-- `400 Bad Request`: `:id` is not a valid MongoDB ObjectId.
-- `404 Not Found`: no room exists with that ID.
+- `201 Created`: room created; response contains the room in `data`.
+- `400 Bad Request`: Joi validation failed.
+- `401 Unauthorized`: JWT is missing or invalid.
+- `403 Forbidden`: caller is not an admin.
+- `409 Conflict`: `roomNumber` conflicts with an existing room.
 
 ### Update a room
 
-`PATCH /api/v1/rooms/:id`
+`PATCH /api/v1/rooms/:id` — **Private (Admin only)**
 
-`:id` is the MongoDB document ID. The request body is a partial room object;
-omitted fields remain unchanged.
+Send one or more allowed fields in the request body. The fields provided are
+validated using the update Joi rules above, and the response contains the
+updated room in `data`.
 
-Request body:
-
-```json
-{
-  "price": 110,
-  "isAvailable": false
-}
-```
-
-Accepts one or more of `roomType`, `roomNumber`, `price`, `capacity`, `floor`,
-`description`, or `isAvailable`. The same schema rules as creation apply to
-provided values.
-
-`200 OK` response:
-
-```json
-{
-  "data": {
-    "id": "66a1b2c3d4e5f67890123456",
-    "roomType": "Double",
-    "roomNumber": 204,
-    "price": 110,
-    "capacity": 2,
-    "floor": 2,
-    "description": "City view",
-    "isAvailable": false,
-    "createdAt": "2026-10-04T01:00:00.000Z",
-    "updatedAt": "2026-10-04T02:00:00.000Z"
-  }
-}
-```
-
-- `400 Bad Request`: invalid ID or invalid field values.
-- `404 Not Found`: no room exists with that ID.
-- `409 Conflict`: `roomNumber` is already assigned to another room.
+- `200 OK`: room updated.
+- `400 Bad Request`: invalid ObjectId or Joi validation failed.
+- `401 Unauthorized`: JWT is missing or invalid.
+- `403 Forbidden`: caller is not an admin.
+- `404 Not Found`: no room matches the valid ID.
+- `409 Conflict`: updated `roomNumber` conflicts with another room.
 
 ### Delete a room
 
-`DELETE /api/v1/rooms/:id`
+`DELETE /api/v1/rooms/:id` — **Private (Admin only)**
 
-`:id` is the MongoDB document ID.
-
-- `204 No Content`: room deleted successfully; response has no body.
+- `204 No Content`: room deleted; response has no body.
 - `400 Bad Request`: `:id` is not a valid MongoDB ObjectId.
-- `404 Not Found`: no room exists with that ID.
+- `401 Unauthorized`: JWT is missing or invalid.
+- `403 Forbidden`: caller is not an admin.
+- `404 Not Found`: no room matches the valid ID.
 
-## Error response object
+## Error response shape
 
-Proposed common error response:
+Errors use the application's standard envelope:
 
 ```json
 {
   "error": {
     "code": "VALIDATION_ERROR",
-    "message": "Request validation failed.",
+    "message": "Validation Failed !",
     "details": [
       {
         "field": "roomType",
-        "message": "Must be Single or Double."
+        "message": "\"roomType\" must be one of [Single, Double]"
       }
     ]
   }
 }
 ```
-
-Use `400 Bad Request` for malformed input or schema validation errors,
-`404 Not Found` when the requested room does not exist, and `409 Conflict` for
-duplicate `roomNumber` values. Error codes should be stable for clients; messages
-and `details` may provide more context.
-
-## Availability scope
-
-`isAvailable` is the schema's single current availability flag. This contract does
-not define date-based availability or reservation conflict checks because the
-current schema has no booking relationship or date range. Those behaviors should
-be defined with the booking API rather than inferred from this field.
-
-## Known gaps
-
-- List filters (`roomType`, `capacity`, `floor`, `minPrice`, `maxPrice`,
-  `isAvailable`) and `sort` are not implemented yet. Only `page` and `limit` are
-  supported. Planned for a follow-up PR.ww
