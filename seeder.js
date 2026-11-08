@@ -37,7 +37,7 @@ const importRooms = async () => {
     }
 }
 //  Delete Rooms
-const deletetRooms = async () => {
+const deleteRooms = async () => {
     try {
         await Room.deleteMany()
         console.log("Rooms Deleted");
@@ -54,5 +54,5 @@ if(process.argv[2] === '-import-admin'){
 }else if (process.argv[2] === '-import-rooms'){
     importRooms();
 }else if(process.argv[2] === '-delete-rooms'){
-    deletetRooms();
+    deleteRooms();
 }

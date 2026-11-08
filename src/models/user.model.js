@@ -37,7 +37,7 @@ const UserSchema = new mongoose.Schema(
         role: {
             type: String,
             enum: Object.values(ROLES),
-            default: ROLES.User,
+            default: ROLES.USER,
         },
     },
     { timestamps: true },
@@ -56,7 +56,19 @@ function validateUpdateUser(obj) {
     return schema.validate(obj, { abortEarly: false });
 }
 
+// Validate User Role
+function validateUpdateUserRole(data) {
+    const schema = Joi.object({
+        role: Joi.string()
+            .valid(...Object.values(ROLES))
+            .required(),
+    });
+
+    return schema.validate(data, { abortEarly: false });
+}
+
 module.exports = {
     User,
     validateUpdateUser,
+    validateUpdateUserRole,
 };

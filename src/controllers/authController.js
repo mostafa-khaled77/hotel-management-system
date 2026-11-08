@@ -3,6 +3,7 @@ const AppError = require('../utils/AppError');
 const { StatusCodes } = require('http-status-codes');
 const ERROR_CODES = require('../constants/errorCodes');
 const generateToken = require('../utils/jwt');
+const ms = require('ms');
 const googleCallback = asyncHandler(async (req, res) => {
     const user = req.user;
     if (!user) {
@@ -17,7 +18,7 @@ const googleCallback = asyncHandler(async (req, res) => {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
-        maxAge: 30 * 24 * 60 * 60 * 1000,
+        maxAge: ms(process.env.JWT_EXPIRES_IN),
     });
     res.success(
         {

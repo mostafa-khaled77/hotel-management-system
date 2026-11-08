@@ -9,8 +9,11 @@ const { ROLES } = require('../constants/roles');
 const verifyToken = asyncHandler(async (req, res, next) => {
     let token;
     const checkHeader = req.headers.authorization;
-    if (checkHeader && checkHeader.startsWith('Bearer')) {
-        token = checkHeader.split(' ')[1];
+    if (checkHeader) {
+        const [scheme, credentials] = checkHeader.split(' ');
+        if (scheme === 'Bearer' && credentials) {
+            token = credentials;
+        }
     } else if (req.cookies && req.cookies.token) {
         token = req.cookies.token;
     }

@@ -5,8 +5,9 @@ const ERROR_CODES = require('../constants/errorCodes');
 
 const findOrCreateGoogleUser = async (profile) => {
     const googleId = profile.id;
-    const email =
-        profile.emails && profile.emails[0] ? profile.emails[0].value : null;
+    const entryEmail = profile.emails && profile.emails[0];
+    const email = entryEmail ? entryEmail.value : null;
+    const emailVerified = entryEmail ? entryEmail.verified !== false : false;
     if (!email) {
         throw new AppError(
             StatusCodes.BAD_REQUEST,
@@ -19,6 +20,13 @@ const findOrCreateGoogleUser = async (profile) => {
 
     if (user) {
         if (!user.googleId) {
+            if (!emailVerified) {
+                throw new AppError(
+                    StatusCodes.BAD_REQUEST,
+                    ERROR_CODES.BAD_REQUEST,
+                    'Email is not verified',
+                );
+            }
             user.googleId = googleId;
             await user.save();
         }

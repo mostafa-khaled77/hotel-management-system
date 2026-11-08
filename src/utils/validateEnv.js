@@ -9,11 +9,11 @@ const requiredEnvviable = [
 ];
 
 const validateEnv = () => {
-    const missvars = requiredEnvviable.filter((v) => !process.env[v]);
+    const missingVars = requiredEnvviable.filter((v) => !process.env[v]);
 
-    if (missvars.length > 0) {
+    if (missingVars.length > 0) {
         throw new Error(
-            `${missvars.join(' , ')} : is missing required variable in env file `,
+            `Missing required environment variables: ${missingVars.join(', ')}`,
         );
     }
 };

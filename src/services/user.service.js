@@ -1,15 +1,14 @@
 const { StatusCodes } = require('http-status-codes');
 const AppError = require('../utils/AppError');
 const ERROR_CODES = require('../constants/errorCodes');
-const { User } = require('../models/user.model');
+const { User, validateUpdateUserRole } = require('../models/user.model');
 const { validateUpdateUser } = require('../models/user.model');
 const validationError = require('../utils/validationError');
 const getPagination = require('../utils/pagination');
-const { query } = require('../app');
 
 // Get User Profile
 const getSelfUserService = async (userId) => {
-    const user = await User.findById(userId).select('-role');
+    const user = await User.findById(userId);
     if (!user) {
         throw new AppError(
             StatusCodes.NOT_FOUND,
@@ -30,7 +29,7 @@ const updateUserService = async (userId, body) => {
         userId,
         { $set: body },
         { returnDocument: 'after', runValidators: true },
-    ).select('-role');
+    );
 
     if (!updatedUser) {
         throw new AppError(
@@ -46,7 +45,7 @@ const updateUserService = async (userId, body) => {
 const getAllUsersService = async (query) => {
     const { page, limit, skip } = getPagination(query);
     const [users, total] = await Promise.all([
-        User.find().skip(skip).limit(limit).select('-role'),
+        User.find().skip(skip).limit(limit),
         User.countDocuments(),
     ]);
     return {
@@ -73,7 +72,7 @@ const deleteUsersService = async (userId) => {
     return deleteUser;
 };
 
-// Delete An user
+// Get User By Id
 const getUserByIdService = async (userId) => {
     const getSpecificUser = await User.findById(userId);
     if (!getSpecificUser) {
@@ -88,10 +87,14 @@ const getUserByIdService = async (userId) => {
 
 // Update User Role
 const updateUserRoleService = async (userId, role) => {
+    const { error } = validateUpdateUserRole({ role });
+    if (error) {
+        throw validationError(error);
+    }
     const updatedUser = await User.findByIdAndUpdate(
         userId,
         { role },
-        { new: true, runValidators: true },
+        { returnDocument: 'after', runValidators: true },
     );
     if (!updatedUser) {
         throw new AppError(
