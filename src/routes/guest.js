@@ -7,21 +7,22 @@ const {
     updateGuest,
     deleteGuest,
 } = require('../controllers/guestController');
+const { verifyTokenAndAdmin } = require('../middlewares/verifyToken');
 const router = express.Router();
 
 // api/v1/guests
 // prettier-ignore
 router
     .route('/')
-    .get(getAllGuests)
-    .post(createNewGuest);
+    .get(verifyTokenAndAdmin, getAllGuests)
+    .post(verifyTokenAndAdmin, createNewGuest);
 
 // api/v1/guests/:id
 router
     .route('/:id')
     .all(validateObjectId)
-    .get(getGuestById)
-    .patch(updateGuest)
-    .delete(deleteGuest);
+    .get(verifyTokenAndAdmin, getGuestById)
+    .patch(verifyTokenAndAdmin, updateGuest)
+    .delete(verifyTokenAndAdmin, deleteGuest);
 
 module.exports = router;

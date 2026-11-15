@@ -57,7 +57,7 @@ const getRoomById = asyncHandler(async (req, res, next) => {
  * @desc  Create New Room
  * @route /api/v1/rooms
  * @method POST
- * @access public
+ * @access private(only Admins)
  */
 const createNewRoom = asyncHandler(async (req, res, next) => {
     const { error } = validateCreateRoom(req.body);
@@ -83,7 +83,7 @@ const createNewRoom = asyncHandler(async (req, res, next) => {
  * @desc  Update Room
  * @route /api/v1/rooms/:id
  * @method PATCH
- * @access public
+ * @access private(only Admins)
  */
 const updateRoom = asyncHandler(async (req, res, next) => {
     const { error } = validateUpdateRoom(req.body);
@@ -113,7 +113,7 @@ const updateRoom = asyncHandler(async (req, res, next) => {
  * @desc  Delete Room
  * @route /api/v1/rooms/:id
  * @method DELETE
- * @access public
+ * @access private(only Admins)
  */
 const deleteRoom = asyncHandler(async (req, res, next) => {
     const deletedRoom = await Room.findByIdAndDelete(req.params.id);

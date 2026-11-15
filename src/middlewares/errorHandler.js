@@ -15,7 +15,8 @@ const notFound = (req, res, next) => {
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
     let statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
-    let code = err.code || ERROR_CODES.INTERNAL_SERVER_ERROR;
+    let code = err.code || err.errorCode || ERROR_CODES.INTERNAL_SERVER_ERROR;
+
     let message = err.statusCode ? err.message : 'Something went wrong.';
     const details = err.details || [];
 
