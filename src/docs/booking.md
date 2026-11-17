@@ -14,9 +14,9 @@ determine whether it is available for a particular stay.
 
 Bookings enter the system through two sources:
 
-| Source | Caller and flow | Guest handling |
-| --- | --- | --- |
-| `online` | An authenticated user submits a booking request through the website. | Resolve or create the user's `Guest` profile on demand, then associate it with the booking. |
+| Source      | Caller and flow                                                                                 | Guest handling                                                                                                                                                       |
+| ----------- | ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `online`    | An authenticated user submits a booking request through the website.                            | Resolve or create the user's `Guest` profile on demand, then associate it with the booking.                                                                          |
 | `reception` | An authenticated `Admin` creates a booking for a walk-in guest or assists a guest at reception. | The Admin provides guest details or selects an eligible existing guest profile. Reception-created walk-in profiles have no online `User` association (`user: null`). |
 
 Both entry points use the same availability, capacity, date, and pricing rules.
@@ -65,6 +65,11 @@ index restricted to ObjectId values) and handle a concurrent create by
 loading the already-associated Guest. The index must allow multiple reception
 Guest records with `user: null`.
 
+The guest profile is resolved before booking validation, so a rejected booking
+(for example, a date conflict) may still leave a Guest profile associated with
+the user. This is intentional: the profile is needed for any future booking
+attempt and creation is idempotent via the unique `user` reference.
+
 ### Reception and walk-in guest resolution
 
 An Admin may provide a guest's details to create a guest profile or select an
@@ -81,18 +86,18 @@ The following is the logical Mongoose contract. The model should use timestamps
 and the project's standard JSON transformation so serialized documents expose
 `id` and omit internal MongoDB fields.
 
-| Field | Type | Required | Constraints and behavior |
-| --- | --- | --- | --- |
-| `guest` | `ObjectId`, ref `Guest` | Yes | Operational guest staying in the room. |
-| `room` | `ObjectId`, ref `Room` | Yes | Room reserved for the stay. |
-| `checkInDate` | `Date` | Yes | Inclusive beginning of the stay. |
-| `checkOutDate` | `Date` | Yes | Exclusive end of the stay; must be later than `checkInDate`. |
-| `guestsCount` | `Number` | Yes | Integer, minimum `1`, and no greater than the selected room's `capacity`. |
-| `totalPrice` | `Number` | Yes | Calculated by the server as stay nights multiplied by the room's nightly price. Never accept a client-calculated amount. |
-| `status` | `String` | No | Enum: `pending`, `confirmed`, `checked-in`, `checked-out`, `cancelled`; default `pending`. |
-| `paymentStatus` | `String` | No | Enum: `unpaid`, `paid`, `refunded`; default `unpaid`. |
-| `source` | `String` | Yes | Enum: `online`, `reception`; assigned by the corresponding server-side flow. |
-| `notes` | `String` | No | Optional booking notes; apply normal input length and content validation. |
+| Field           | Type                    | Required | Constraints and behavior                                                                                                 |
+| --------------- | ----------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `guest`         | `ObjectId`, ref `Guest` | Yes      | Operational guest staying in the room.                                                                                   |
+| `room`          | `ObjectId`, ref `Room`  | Yes      | Room reserved for the stay.                                                                                              |
+| `checkInDate`   | `Date`                  | Yes      | Inclusive beginning of the stay.                                                                                         |
+| `checkOutDate`  | `Date`                  | Yes      | Exclusive end of the stay; must be later than `checkInDate`.                                                             |
+| `guestsCount`   | `Number`                | Yes      | Integer, minimum `1`, and no greater than the selected room's `capacity`.                                                |
+| `totalPrice`    | `Number`                | Yes      | Calculated by the server as stay nights multiplied by the room's nightly price. Never accept a client-calculated amount. |
+| `status`        | `String`                | No       | Enum: `confirmed`, `checked-in`, `checked-out`, `cancelled`; default `confirmed`.                                        |
+| `paymentStatus` | `String`                | No       | Enum: `unpaid`, `paid`, `refunded`; default `unpaid`.                                                                    |
+| `source`        | `String`                | Yes      | Enum: `online`, `reception`; assigned by the corresponding server-side flow.                                             |
+| `notes`         | `String`                | No       | Optional booking notes; apply normal input length and content validation.                                                |
 
 `totalPrice` uses the room's server-side `price` field as its
 `pricePerNight`. Compute the number of nights from the normalized stay dates;
@@ -128,15 +133,15 @@ the `token` cookie when the Authorization header is absent. Admin-only
 endpoints must use the existing `verifyTokenAndAdmin` authorization rule.
 Success and error payloads follow the shared envelopes in [`api.md`](./api.md).
 
-| Method and path | Access | Purpose |
-| --- | --- | --- |
-| `POST /api/v1/bookings/online` | Authenticated `User` | Create an online booking; resolve the guest with `ensureGuestForBookingService(userId)`. |
-| `POST /api/v1/bookings/reception` | `Admin` | Create a walk-in or staff-assisted booking. |
-| `GET /api/v1/bookings` | `Admin` | List system bookings with pagination and filters. |
-| `GET /api/v1/bookings/my-bookings` | Authenticated `User` | List bookings belonging to the logged-in user. |
-| `GET /api/v1/bookings/:id` | Booking owner or `Admin` | Return booking details with populated `room` and `guest`. |
-| `PATCH /api/v1/bookings/:id/status` | `Admin` | Apply an allowed booking lifecycle transition. |
-| `PATCH /api/v1/bookings/:id/cancel` | Booking owner or `Admin` | Cancel a booking subject to cancellation and payment rules. |
+| Method and path                     | Access                   | Purpose                                                                                  |
+| ----------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------- |
+| `POST /api/v1/bookings/online`      | Authenticated `User`     | Create an online booking; resolve the guest with `ensureGuestForBookingService(userId)`. |
+| `POST /api/v1/bookings/reception`   | `Admin`                  | Create a walk-in or staff-assisted booking.                                              |
+| `GET /api/v1/bookings`              | `Admin`                  | List system bookings with pagination and filters.                                        |
+| `GET /api/v1/bookings/my-bookings`  | Authenticated `User`     | List bookings belonging to the logged-in user.                                           |
+| `GET /api/v1/bookings/:id`          | Booking owner or `Admin` | Return booking details with populated `room` and `guest`.                                |
+| `PATCH /api/v1/bookings/:id/status` | `Admin`                  | Apply an allowed booking lifecycle transition.                                           |
+| `PATCH /api/v1/bookings/:id/cancel` | Booking owner or `Admin` | Cancel a booking subject to cancellation and payment rules.                              |
 
 The User schema currently supports only `user` and `admin` roles. All
 reception and booking-management routes in this contract are therefore
@@ -154,11 +159,11 @@ financial/state fields:
 
 ```json
 {
-  "room": "66a1b2c3d4e5f67890123456",
-  "checkInDate": "2026-12-10",
-  "checkOutDate": "2026-12-13",
-  "guestsCount": 2,
-  "notes": "Late arrival"
+    "room": "66a1b2c3d4e5f67890123456",
+    "checkInDate": "2026-12-10",
+    "checkOutDate": "2026-12-13",
+    "guestsCount": 2,
+    "notes": "Late arrival"
 }
 ```
 
@@ -170,18 +175,38 @@ guest details for a new walk-in profile:
 
 ```json
 {
-  "guest": "66a1b2c3d4e5f67890123457",
-  "room": "66a1b2c3d4e5f67890123456",
-  "checkInDate": "2026-12-10",
-  "checkOutDate": "2026-12-13",
-  "guestsCount": 2,
-  "notes": "Walk-in"
+    "guest": "66a1b2c3d4e5f67890123457",
+    "room": "66a1b2c3d4e5f67890123456",
+    "checkInDate": "2026-12-10",
+    "checkOutDate": "2026-12-13",
+    "guestsCount": 2,
+    "notes": "Walk-in"
 }
 ```
 
-For a new guest, the Admin may instead provide the guest profile details
-required by the Guest contract. The server creates that profile with
-`user: null`, associates it with the booking, and sets `source` to `reception`.
+In the reception flow, `guest` is required and has two forms:
+
+- A string: the ID of an existing Guest profile.
+- An object: a new walk-in guest with `firstName`, `lastName`, and at least one of `email` or `phone` (following the Guest contract rules). The server creates the profile with `user: null`. Any other key inside the `guest` object, including `user`, is rejected with a `400 Bad Request`.
+
+Example of a new walk-in guest request body:
+
+```json
+{
+    "guest": {
+        "firstName": "Sam",
+        "lastName": "Taylor",
+        "email": "sam@example.com",
+        "phone": "01012345678"
+    },
+    "room": "66a1b2c3d4e5f67890123456",
+    "checkInDate": "2026-12-10",
+    "checkOutDate": "2026-12-13",
+    "guestsCount": 2,
+    "notes": "Walk-in"
+}
+```
+
 The request must not set the booking's `totalPrice`, `status`,
 `paymentStatus`, or `source`, or set a guest's `user` reference.
 
@@ -190,9 +215,11 @@ The request must not set the booking's `totalPrice`, `status`,
 - `401 Unauthorized` / `403 Forbidden`: caller is unauthenticated or lacks the
   required role.
 - `404 Not Found`: referenced room or guest does not exist.
-- `409 Conflict`: room is unavailable for the requested interval.
-- `422 Unprocessable Entity`: valid request that violates a business rule,
-  such as exceeding capacity or using a room marked unavailable.
+- `409 Conflict`: an active booking overlaps the requested interval or the
+  room is marked unavailable (`isAvailable: false`). These conditions must
+  have distinct internal error `code` values.
+- `422 Unprocessable Entity`: valid request that violates a fixed structural
+  rule, such as exceeding the room's capacity.
 
 ### List bookings
 
@@ -205,13 +232,13 @@ availability checks. Return the standard list envelope:
 
 ```json
 {
-  "data": [],
-  "pagination": {
-    "page": 1,
-    "limit": 20,
-    "total": 0,
-    "totalPages": 0
-  }
+    "data": [],
+    "pagination": {
+        "page": 1,
+        "limit": 20,
+        "total": 0,
+        "totalPages": 0
+    }
 }
 ```
 
@@ -239,9 +266,11 @@ expose unrelated guest personal data to unauthorized users.
 
 `PATCH /api/v1/bookings/:id/status` accepts a validated `status` value and
 applies only legal lifecycle transitions. At minimum, disallow transitions out
-of `cancelled` and prevent a booking from being checked in before its valid
-stay. The service must validate the current state and requested transition
-rather than allowing arbitrary status assignment.
+of `cancelled` and allow a booking to move to `checked-in` only when
+`today >= checkInDate && today < checkOutDate`, with all dates evaluated as
+hotel-local dates in `Africa/Cairo`. The service must validate the current
+state and requested transition rather than allowing arbitrary status
+assignment.
 
 `PATCH /api/v1/bookings/:id/cancel` is an owner/admin action. The service must
 verify ownership, reject cancellation when the booking is already checked in,
@@ -272,8 +301,12 @@ bookings for the selected room with:
 
 An existing booking overlaps exactly when its check-in is before the requested
 check-out and its check-out is after the requested check-in. Exclude cancelled
-bookings because they no longer reserve inventory. Reject the new booking if
-any matching active booking exists.
+bookings because they release inventory immediately. Every booking is created
+with an initial status of `confirmed`; `confirmed`, `checked-in`, and
+`checked-out` are active statuses that hold room inventory. Reject the new
+booking with a `409 Conflict` if any matching active booking exists. If the
+room is marked unavailable (`isAvailable: false`), also return `409 Conflict`,
+using a distinct internal error `code` for that condition.
 
 The availability check and insert must be protected against simultaneous
 requests for the same room and overlapping dates. Use a transaction together
@@ -301,11 +334,15 @@ calculated amount when the booking is created.
 Before creating a booking, load the room and verify that it exists, that
 `isAvailable` is `true`, and that `guestsCount` is a positive integer no greater
 than the room's current `capacity`. A room marked unavailable must not be
-booked even if no date-overlapping booking is found. Check both room status
-and date-range occupancy; neither check replaces the other.
+booked even if no date-overlapping booking is found; return `409 Conflict`
+with its own error `code`. Exceeding capacity is a fixed structural rule and
+returns `422 Unprocessable Entity`. Check both room status and date-range
+occupancy; neither check replaces the other.
 
 Also validate that both dates are valid, `checkOutDate` is later than
 `checkInDate`, referenced ObjectIds are well-formed, and the resolved guest
 exists. Return clear validation or conflict errors using the shared API error
 envelope. Never trust client-supplied ownership, booking source, status,
 payment status, room capacity, room availability, or price.
+
+- **Past-date rule:** `checkInDate` must be today or later. "Today" is evaluated in the hotel's timezone (`Africa/Cairo`), not the server's or UTC. A past `checkInDate` must be rejected with a `400 Bad Request` error.
