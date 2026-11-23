@@ -36,6 +36,11 @@ const RoomSchema = new mongoose.Schema(
             type: Boolean,
             default: true,
         },
+        bookingVersion: {
+            type: Number,
+            default: 0,
+            select: false,
+        },
     },
     { timestamps: true },
 );

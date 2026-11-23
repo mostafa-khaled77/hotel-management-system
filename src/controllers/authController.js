@@ -6,6 +6,7 @@ const generateToken = require('../utils/jwt');
 const ms = require('ms');
 const googleCallback = asyncHandler(async (req, res) => {
     const user = req.user;
+    console.log(user);
     if (!user) {
         throw new AppError(
             StatusCodes.UNAUTHORIZED,
@@ -25,7 +26,8 @@ const googleCallback = asyncHandler(async (req, res) => {
             message: 'Logged in successfully',
             user: {
                 id: user.id,
-                userName: user.userName,
+                firstName: user.firstName,
+                lastName: user.lastName,
                 email: user.email,
                 role: user.role,
                 profileImage: user.profileImage,

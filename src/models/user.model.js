@@ -10,12 +10,17 @@ const UserSchema = new mongoose.Schema(
             required: true,
             unique: true,
         },
-        userName: {
+        firstName: {
             type: String,
             trim: true,
             required: true,
-            minlength: 2,
-            maxlength: 40,
+            default: 'Google',
+        },
+        lastName: {
+            type: String,
+            trim: true,
+            required: true,
+            default: 'User',
         },
         email: {
             type: String,
@@ -48,7 +53,8 @@ const User = mongoose.model('User', UserSchema);
 
 function validateUpdateUser(obj) {
     const schema = Joi.object({
-        userName: Joi.string().trim().min(2).max(40),
+        firstName: Joi.string().trim(),
+        lastName: Joi.string().trim(),
         profileImage: Joi.string().trim().allow(''),
         phone: Joi.string().trim().allow(''),
     }).min(1);
