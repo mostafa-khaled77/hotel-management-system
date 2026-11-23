@@ -6,6 +6,49 @@ const guestFilter = require('../utils/guestFilter');
 const getPagination = require('../utils/pagination');
 const getSort = require('../utils/sort');
 const ERROR_CODES = require('../constants/errorCodes');
+const { User } = require('../models/user.model');
+
+const ensureGuestForBookingService = async (userId, session) => {
+    const guest = await Guest.findOne({ user: userId }).session(session);
+    if (guest) {
+        return guest._id;
+    }
+    const user = await User.findById(userId)
+        .session(session)
+        .select('firstName lastName email phone')
+        .session(session);
+    if (!user) {
+        throw new AppError(
+            StatusCodes.NOT_FOUND,
+            ERROR_CODES.NOT_FOUND,
+            'User Not Found',
+        );
+    }
+    const firstName = user.firstName?.trim();
+    const lastName = user.lastName?.trim();
+    const phone = user.phone?.trim();
+    if (!firstName || !lastName) {
+        throw new AppError(
+            StatusCodes.BAD_REQUEST,
+            ERROR_CODES.BAD_REQUEST,
+            'Please complete your account profile with a valid first and last name before booking.',
+        );
+    }
+
+    const [newGuest] = await Guest.create(
+        [
+            {
+                user: userId,
+                firstName,
+                lastName,
+                email: user.email,
+                phone: phone || '',
+            },
+        ],
+        { session },
+    );
+    return newGuest._id;
+};
 
 const getAllGuestsService = async (query) => {
     const { page, limit, skip } = getPagination(query);
@@ -86,4 +129,5 @@ module.exports = {
     createNewGuestService,
     updateGuestService,
     deleteGuestService,
+    ensureGuestForBookingService,
 };

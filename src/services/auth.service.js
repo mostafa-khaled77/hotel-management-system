@@ -5,9 +5,9 @@ const ERROR_CODES = require('../constants/errorCodes');
 
 const findOrCreateGoogleUser = async (profile) => {
     const googleId = profile.id;
-    const entryEmail = profile.emails && profile.emails[0];
+    const entryEmail = profile.emails?.[0];
     const email = entryEmail ? entryEmail.value : null;
-    const emailVerified = entryEmail ? entryEmail.verified !== false : false;
+    const emailVerified = entryEmail?.verified === true;
     if (!email) {
         throw new AppError(
             StatusCodes.BAD_REQUEST,
@@ -31,18 +31,16 @@ const findOrCreateGoogleUser = async (profile) => {
             await user.save();
         }
     } else {
-        let userName = profile.displayName || 'Google User';
-        if (userName.trim().length < 2) {
-            userName = userName + '_User';
-        }
+        const firstName = profile.name?.givenName?.trim() || 'Google';
+        const lastName = profile.name?.familyName?.trim() || 'User';
+        const profileImage =
+            profile.photos && profile.photos[0] ? profile.photos[0].value : '';
         user = await User.create({
             googleId,
-            userName,
+            firstName,
+            lastName,
             email,
-            profileImage:
-                profile.photos && profile.photos[0]
-                    ? profile.photos[0].value
-                    : '',
+            profileImage,
         });
     }
     return user;

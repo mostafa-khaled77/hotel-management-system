@@ -4,10 +4,12 @@ const { toJSONPlugin } = require('../config/toJSON.plugin');
 
 const GuestSchema = mongoose.Schema(
     {
-        user:{
-            type:mongoose.Schema.Types.ObjectId,
-            ref:'User',
-            default:null,
+        user: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+            default: null,
+            unique: true,
+            sparse: true,
         },
         firstName: {
             type: String,

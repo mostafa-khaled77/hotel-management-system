@@ -7,6 +7,7 @@ const ERROR_CODES = Object.freeze({
     UNAUTHORIZED: 'UNAUTHORIZED',
     FORBIDDEN: 'FORBIDDEN',
     BAD_REQUEST: 'BAD_REQUEST',
+    CONFLICT: 'CONFLICT',
 });
 
 module.exports = ERROR_CODES;

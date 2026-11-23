@@ -16,8 +16,10 @@ const notFound = (req, res, next) => {
 const errorHandler = (err, req, res, next) => {
     let statusCode = err.statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     let code = err.code || err.errorCode || ERROR_CODES.INTERNAL_SERVER_ERROR;
+    console.log(err);
 
-    let message = err.statusCode ? err.message : 'Something went wrong.';
+    let message =
+        err.statusCode || err.value ? err.message : 'Something went wrong.';
     const details = err.details || [];
 
     if (err.code === 11000) {

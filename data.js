@@ -100,7 +100,8 @@ const rooms = [
 ];
 
 const defaultAdmin = {
-    userName: 'System Admin',
+    firstName: 'System',
+    lastName:"Admin",
     email: 'admin@hotel.com',
     role: 'admin',
     googleId: 'admin_seeded_google_id_999',
